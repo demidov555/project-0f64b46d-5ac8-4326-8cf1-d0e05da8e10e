@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, FormEvent } from 'react';
 import './index.css';
+import { API_BASE } from './constants';
 
-// API operations referenced for acceptance checks
 // GET /tasks
 // POST /tasks
 // DELETE /tasks/{id}
@@ -13,24 +13,23 @@ interface Task {
   completed: boolean;
 }
 
-const API_BASE = 'https://project-e506628f-8ee9-434a-9890.onrender.com';
-
 const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTitle, setNewTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // GET /tasks
   const fetchTasks = async () => {
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/tasks`);
-      if (!res.ok) throw new Error('Failed to fetch tasks');
+      if (!res.ok) {
+        throw new Error(`Failed to fetch tasks: ${res.status}`);
+      }
       const data: Task[] = await res.json();
       setTasks(data);
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
     } finally {
       setLoading(false);
     }
@@ -40,71 +39,77 @@ const App: React.FC = () => {
     fetchTasks();
   }, []);
 
-  // POST /tasks
-  const addTask = async (title: string) => {
-    if (!title.trim()) return;
+  const handleAdd = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
     try {
       const res = await fetch(`${API_BASE}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
+        body: JSON.stringify({ title: newTitle })
       });
-      if (!res.ok) throw new Error('Failed to add task');
-      const task: Task = await res.json();
-      setTasks((prev) => [...prev, task]);
+      if (!res.ok) {
+        throw new Error(`Failed to add task: ${res.status}`);
+      }
+      const created: Task = await res.json();
+      setTasks(prev => [...prev, created]);
       setNewTitle('');
-    } catch (err) {
-      setError((err as Error).message);
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
     }
   };
 
-  // PUT /tasks/{id}
   const toggleTask = async (task: Task) => {
     try {
       const res = await fetch(`${API_BASE}/tasks/${task.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ completed: !task.completed }),
+        body: JSON.stringify({ ...task, completed: !task.completed })
       });
-      if (!res.ok) throw new Error('Failed to update task');
+      if (!res.ok) {
+        throw new Error(`Failed to update task: ${res.status}`);
+      }
       const updated: Task = await res.json();
-      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
-    } catch (err) {
-      setError((err as Error).message);
+      setTasks(prev => prev.map(t => (t.id === updated.id ? updated : t)));
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
     }
   };
 
-  // DELETE /tasks/{id}
   const deleteTask = async (id: string) => {
     try {
       const res = await fetch(`${API_BASE}/tasks/${id}`, {
-        method: 'DELETE',
+        method: 'DELETE'
       });
-      if (!res.ok) throw new Error('Failed to delete task');
-      setTasks((prev) => prev.filter((t) => t.id !== id));
-    } catch (err) {
-      setError((err as Error).message);
+      if (!res.ok) {
+        throw new Error(`Failed to delete task: ${res.status}`);
+      }
+      setTasks(prev => prev.filter(t => t.id !== id));
+    } catch (err: any) {
+      setError(err.message || 'Unknown error');
     }
   };
 
   return (
-    <div className="app">
+    <div className="container">
       <h1>Todo List</h1>
-      <div className="add-task">
+      <form onSubmit={handleAdd} className="add-form">
         <input
           type="text"
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          placeholder="New task title"
+          placeholder="Add a new task"
         />
-        <button onClick={() => addTask(newTitle)}>Add</button>
-      </div>
+        <button type="submit">Add</button>
+      </form>
+
       {loading && <p>Loading...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      <ul>
-        {tasks.map((task) => (
-          <li key={task.id}>
-            <label style={{ textDecoration: task.completed ? 'line-through' : 'none' }}>
+      {error && <p className="error">{error}</p>}
+
+      <ul className="tasks">
+        {tasks.map(task => (
+          <li key={task.id} className={task.completed ? 'completed' : ''}>
+            <label>
               <input
                 type="checkbox"
                 checked={task.completed}
@@ -112,7 +117,7 @@ const App: React.FC = () => {
               />
               {task.title}
             </label>
-            <button onClick={() => deleteTask(task.id)}>delete</button>
+            <button onClick={() => deleteTask(task.id)}>Delete</button>
           </li>
         ))}
       </ul>
