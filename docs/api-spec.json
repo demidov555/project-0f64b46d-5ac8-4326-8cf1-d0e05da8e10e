@@ -3,13 +3,13 @@
   "info": {
     "title": "Todo List API",
     "version": "1.0.0",
-    "description": "API specification for todo list application."
+    "description": "API specification for task management."
   },
   "paths": {
     "/tasks": {
       "get": {
-        "summary": "GET /tasks",
-        "operationId": "getTasks",
+        "operationId": "GET /tasks",
+        "summary": "Retrieve all tasks",
         "responses": {
           "200": {
             "description": "A list of tasks",
@@ -25,19 +25,19 @@
             }
           },
           "default": {
-            "$ref": "#/components/responses/Error"
+            "$ref": "#/components/responses/ErrorResponse"
           }
         }
       },
       "post": {
-        "summary": "POST /tasks",
-        "operationId": "createTask",
+        "operationId": "POST /tasks",
+        "summary": "Create a new task",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskInput"
+                "$ref": "#/components/schemas/Task"
               }
             }
           }
@@ -54,7 +54,7 @@
             }
           },
           "default": {
-            "$ref": "#/components/responses/Error"
+            "$ref": "#/components/responses/ErrorResponse"
           }
         }
       }
@@ -66,20 +66,31 @@
           "in": "path",
           "required": true,
           "schema": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           }
         }
       ],
+      "delete": {
+        "operationId": "DELETE /tasks/{id}",
+        "summary": "Delete a task by id",
+        "responses": {
+          "204": {
+            "description": "Task deleted"
+          },
+          "default": {
+            "$ref": "#/components/responses/ErrorResponse"
+          }
+        }
+      },
       "put": {
-        "summary": "PUT /tasks/{id}",
-        "operationId": "updateTask",
+        "operationId": "PUT /tasks/{id}",
+        "summary": "Update a task by id",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaskInput"
+                "$ref": "#/components/schemas/Task"
               }
             }
           }
@@ -96,19 +107,7 @@
             }
           },
           "default": {
-            "$ref": "#/components/responses/Error"
-          }
-        }
-      },
-      "delete": {
-        "summary": "DELETE /tasks/{id}",
-        "operationId": "deleteTask",
-        "responses": {
-          "204": {
-            "description": "Task deleted"
-          },
-          "default": {
-            "$ref": "#/components/responses/Error"
+            "$ref": "#/components/responses/ErrorResponse"
           }
         }
       }
@@ -118,47 +117,39 @@
     "schemas": {
       "Task": {
         "type": "object",
+        "required": ["id", "title", "completed"],
         "properties": {
           "id": {
             "type": "string",
-            "format": "uuid"
+            "example": "e7bbd7e9-5a2d-4bf7-8ec1-1234567890ab"
           },
           "title": {
-            "type": "string"
+            "type": "string",
+            "example": "Buy milk"
           },
           "completed": {
-            "type": "boolean"
+            "type": "boolean",
+            "example": false
           }
-        },
-        "required": ["id", "title", "completed"]
-      },
-      "TaskInput": {
-        "type": "object",
-        "properties": {
-          "title": {
-            "type": "string"
-          },
-          "completed": {
-            "type": "boolean"
-          }
-        },
-        "required": ["title"]
+        }
       },
       "Error": {
         "type": "object",
+        "required": ["code", "message"],
         "properties": {
           "code": {
-            "type": "string"
+            "type": "string",
+            "example": "TASK_NOT_FOUND"
           },
           "message": {
-            "type": "string"
+            "type": "string",
+            "example": "The task with the given ID was not found."
           }
-        },
-        "required": ["code", "message"]
+        }
       }
     },
     "responses": {
-      "Error": {
+      "ErrorResponse": {
         "description": "Error response",
         "content": {
           "application/json": {
